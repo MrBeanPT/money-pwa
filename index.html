@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2563eb">
+<title>Money</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>Money</h1>
+  <button id="syncBtn" class="ghost" title="Sincronizar com o Google Drive">⟳ <span id="syncLabel">Sincronizar</span></button>
+</header>
+
+<main>
+  <div id="msg" class="msg"></div>
+
+  <section id="form" class="card">
+    <div class="seg" id="kind">
+      <button data-k="expense" class="on">Despesa</button>
+      <button data-k="income">Receita</button>
+      <button data-k="transfer">Transf.</button>
+    </div>
+
+    <label class="amount">€<input id="fAmount" inputmode="decimal" placeholder="0,00" autocomplete="off"></label>
+
+    <label>Conta<select id="fAccount"></select></label>
+    <label id="lblTo" hidden>Para a conta<select id="fTo"></select></label>
+    <label id="lblPayee">Beneficiário <span id="newPayee" class="warn" hidden>· novo</span>
+      <input id="fPayee" list="dlPayees" autocomplete="off" autocapitalize="sentences"></label>
+    <label id="lblCat">Categoria<input id="fCategory" list="dlCats" autocomplete="off"></label>
+
+    <label class="check" id="lblSplit"><input type="checkbox" id="isSplit"> Dividir por categorias</label>
+    <div id="splitBox" hidden>
+      <div class="hint">Linhas (somam o total) — <span id="splitSum"></span></div>
+      <div id="splitLines"></div>
+      <button class="ghost small" id="addLine" type="button">+ linha</button>
+    </div>
+
+    <div class="two">
+      <label>Data<input type="date" id="fDate"></label>
+      <label>Memo<input id="fMemo" autocomplete="off"></label>
+    </div>
+
+    <button id="saveBtn" class="primary">Guardar</button>
+  </section>
+
+  <section class="card">
+    <div class="listhead"><h2>Registos</h2><span id="counts" class="hint"></span></div>
+    <ul id="list"></ul>
+  </section>
+
+  <section class="card small-text">
+    <div id="authInfo" class="hint"></div>
+    <div id="lookupInfo" class="hint"></div>
+    <div class="row"><button id="signBtn" class="ghost small">Ligar ao Google Drive</button>
+      <button id="clearBtn" class="ghost small">Limpar sincronizados</button></div>
+  </section>
+</main>
+
+<datalist id="dlPayees"></datalist><datalist id="dlCats"></datalist>
+<script src="config.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="app.js"></script>
+</body>
+</html>
