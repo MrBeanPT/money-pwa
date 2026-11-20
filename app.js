@@ -23,7 +23,8 @@ const idb = (() => {
     const db = await open();
     return new Promise((res, rej) => {
       const t = db.transaction(store, mode); const out = fn(t.objectStore(store));
-      t.oncomplete = () => res(out?.result ?? out); t.onerror = () => rej(t.error);
+      // a missing key gives request.result === undefined: return that, not the IDBRequest itself
+      t.oncomplete = () => res(out instanceof IDBRequest ? out.result : out); t.onerror = () => rej(t.error);
     });
   };
   return {
@@ -51,7 +52,7 @@ function msg(text, type = "ok") {
 
 /* ---------------- lookups ---------------- */
 async function applyLookups(l) {
-  if (!l) return;
+  if (!l || !Array.isArray(l.payees)) return;
   L = l; payeeCat = {};
   L.payees.forEach((p) => (payeeCat[p.name] = p.category));
   $("#dlPayees").innerHTML = L.payees.map((p) => `<option value="${esc(p.name)}">`).join("");
@@ -280,9 +281,10 @@ window.addEventListener("online", () => trySync());
 /* ---------------- boot ---------------- */
 (async () => {
   try { const t = JSON.parse(sessionStorage.getItem("tok") || "null"); if (t) token = t; } catch {}
-  resetForm();
-  await applyLookups(await idb.get("lookups"));
-  await render();
+  // each step guarded so a bad local cache can never stop the Google login from initialising
+  try { resetForm(); } catch (x) { console.error(x); }
+  try { await applyLookups(await idb.get("lookups")); } catch (x) { console.error(x); }
+  try { await render(); } catch (x) { console.error(x); }
   initAuth();
   if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
 })();
