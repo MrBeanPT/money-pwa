@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<title>Money · ligação ao banco</title>
+<style>
+  :root { --bg:#f4f5f8; --fg:#1d2330; --muted:#6b7280; --card:#fff; --line:#e3e6eb; --accent:#2563eb; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#12151b; --fg:#e6e9ef; --muted:#9aa3b2; --card:#1b2029; --line:#2b3240; --accent:#60a5fa; } }
+  body { margin:0; font:15px/1.5 system-ui, sans-serif; background:var(--bg); color:var(--fg); }
+  main { max-width:520px; margin:12vh auto; padding:0 16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:20px; }
+  h1 { font-size:18px; margin:0 0 8px; } p { margin:8px 0; color:var(--muted); }
+  a.b { display:inline-block; margin-top:10px; padding:9px 16px; border-radius:8px; background:var(--accent); color:#fff; text-decoration:none; }
+</style>
+</head>
+<body>
+<main><div class="card">
+  <h1 id="t">A voltar à app Money no teu computador…</h1>
+  <p id="p">O banco devolveu a autorização. A app local (http://127.0.0.1:8765) vai concluir a ligação.</p>
+  <a class="b" id="go" href="#">Continuar</a>
+</div></main>
+<script>
+  // Bank authorisation (Enable Banking) returns here with ?code=…&state=… (or ?error=…).
+  // Nothing is stored or sent anywhere else: we only hand the query string to the local app on this computer.
+  // The code is useless without the application's private key, which only exists on that computer.
+  const target = "http://127.0.0.1:8765/bank/callback" + location.search;
+  document.getElementById("go").href = target;
+  const q = new URLSearchParams(location.search);
+  if (q.get("error")) {
+    document.getElementById("t").textContent = "O banco não concluiu a autorização";
+    document.getElementById("p").textContent = (q.get("error_description") || q.get("error")) + " — volta à app e tenta de novo.";
+  }
+  history.replaceState(null, "", location.pathname); // drop the code from the address bar/history
+  setTimeout(() => location.replace(target), 400);
+</script>
+</body>
+</html>
