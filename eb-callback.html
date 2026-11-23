@@ -17,23 +17,46 @@
 </head>
 <body>
 <main><div class="card">
-  <h1 id="t">A voltar à app Money no teu computador…</h1>
-  <p id="p">O banco devolveu a autorização. A app local (http://127.0.0.1:8765) vai concluir a ligação.</p>
+  <h1 id="t">A voltar à app Money…</h1>
+  <p id="p">O banco devolveu a autorização. A app Money (<span id="where">http://127.0.0.1:8765</span>) vai concluir a ligação.</p>
   <a class="b" id="go" href="#">Continuar</a>
 </div></main>
 <script>
   // Bank authorisation (Enable Banking) returns here with ?code=…&state=… (or ?error=…).
-  // Nothing is stored or sent anywhere else: we only hand the query string to the local app on this computer.
-  // The code is useless without the application's private key, which only exists on that computer.
-  const target = "http://127.0.0.1:8765/bank/callback" + location.search;
-  document.getElementById("go").href = target;
+  // Nothing is stored or sent anywhere else: we only hand the query string back to the Money app, at the address
+  // the app put in `state` ("<token>~<base64url origin>"; no suffix = the PC app on 127.0.0.1:8765).
+  // Only local / home-network addresses are accepted. The code is useless without the app's private key.
   const q = new URLSearchParams(location.search);
+  function appOrigin(state) {
+    const fallback = "http://127.0.0.1:8765";
+    const i = (state || "").indexOf("~");
+    if (i < 0) return fallback;
+    try {
+      const b = state.slice(i + 1).replace(/-/g, "+").replace(/_/g, "/");
+      const u = new URL(atob(b + "===".slice((b.length + 3) % 4)));
+      const h = u.hostname;
+      const ok = /^https?:$/.test(u.protocol) && u.pathname === "/" && !u.search && !u.username && (
+        h === "localhost" || h === "127.0.0.1" || h === "[::1]" ||
+        /^10\.\d+\.\d+\.\d+$/.test(h) || /^192\.168\.\d+\.\d+$/.test(h) ||
+        /^172\.(1[6-9]|2\d|3[01])\.\d+\.\d+$/.test(h) || /^100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.\d+\.\d+$/.test(h) ||
+        /\.(local|lan|home|home\.arpa|internal)$/.test(h) || /^[a-z0-9-]+$/i.test(h));
+      return ok ? u.origin : null;
+    } catch (e) { return null; }
+  }
+  const origin = appOrigin(q.get("state"));
+  const target = origin ? origin + "/bank/callback" + location.search : "#";
+  document.getElementById("go").href = target;
+  document.getElementById("where").textContent = origin || "endereço inválido";
   if (q.get("error")) {
     document.getElementById("t").textContent = "O banco não concluiu a autorização";
     document.getElementById("p").textContent = (q.get("error_description") || q.get("error")) + " — volta à app e tenta de novo.";
   }
+  if (!origin) {
+    document.getElementById("t").textContent = "Endereço da app inválido";
+    document.getElementById("p").textContent = "Este pedido não veio da app Money da tua rede. Nada foi enviado.";
+  }
   history.replaceState(null, "", location.pathname); // drop the code from the address bar/history
-  setTimeout(() => location.replace(target), 400);
+  if (origin) setTimeout(() => location.replace(target), 400);
 </script>
 </body>
 </html>
